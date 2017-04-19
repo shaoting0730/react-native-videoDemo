@@ -15,7 +15,8 @@ import {
     ScrollView,
     ActivityIndicator,
     Animated,
-    Easing
+    Easing,
+    InteractionManager
 } from 'react-native'
 var {width,height} = Dimensions.get('window');
 import Video from 'react-native-video'
@@ -206,43 +207,44 @@ export default class Main extends Component {
                     file_duration:bitrate.file_duration //歌曲长度
                 })
 
-                //加载歌词
-                let url = 'http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.lry&songid=' + songid
-                fetch(url)
-                    .then((response) => response.json())
-                    .then((responseJson) => {
+            })
 
-                        let lry = responseJson.lrcContent
-                        let lryAry = lry.split('\n')   //按照换行符切数组
-                        lryAry.forEach(function (val, index) {
-                            var obj = {}   //用于存放时间
-                            val = val.replace(/(^\s*)|(\s*$)/g, '')    //正则,去除前后空格
-                            let indeofLastTime = val.indexOf(']')  // ]的下标
-                            let timeStr = val.substring(1, indeofLastTime) //把时间切出来 0:04.19
-                            let minSec = ''
-                            let timeMsIndex = timeStr.indexOf('.')  // .的下标
-                            if (timeMsIndex !== -1) {
-                                //存在毫秒 0:04.19
-                                minSec = timeStr.substring(1, val.indexOf('.'))  // 0:04.
-                                obj.ms = parseInt(timeStr.substring(timeMsIndex + 1, indeofLastTime))  //毫秒值 19
-                            } else {
-                                //不存在毫秒 0:04
-                                minSec = timeStr
-                                obj.ms = 0
-                            }
-                            let curTime = minSec.split(':')  // [0,04]
-                            obj.min = parseInt(curTime[0])   //分钟 0
-                            obj.sec = parseInt(curTime[1])   //秒钟 04
-                            obj.txt = val.substring(indeofLastTime + 1, val.length) //歌词文本: 留下唇印的嘴
-                            obj.txt = obj.txt.replace(/(^\s*)|(\s*$)/g, '')
-                            obj.dis = false
-                            obj.total = obj.min * 60 + obj.sec + obj.ms / 100   //总时间
-                            if (obj.txt.length > 0) {
-                                lyrObj.push(obj)
-                            }
-                        })
-                    })
 
+        //加载歌词
+        let url1 = 'http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.lry&songid=' + songid
+        fetch(url1)
+            .then((response) => response.json())
+            .then((responseJson) => {
+
+                let lry = responseJson.lrcContent
+                let lryAry = lry.split('\n')   //按照换行符切数组
+                lryAry.forEach(function (val, index) {
+                    var obj = {}   //用于存放时间
+                    val = val.replace(/(^\s*)|(\s*$)/g, '')    //正则,去除前后空格
+                    let indeofLastTime = val.indexOf(']')  // ]的下标
+                    let timeStr = val.substring(1, indeofLastTime) //把时间切出来 0:04.19
+                    let minSec = ''
+                    let timeMsIndex = timeStr.indexOf('.')  // .的下标
+                    if (timeMsIndex !== -1) {
+                        //存在毫秒 0:04.19
+                        minSec = timeStr.substring(1, val.indexOf('.'))  // 0:04.
+                        obj.ms = parseInt(timeStr.substring(timeMsIndex + 1, indeofLastTime))  //毫秒值 19
+                    } else {
+                        //不存在毫秒 0:04
+                        minSec = timeStr
+                        obj.ms = 0
+                    }
+                    let curTime = minSec.split(':')  // [0,04]
+                    obj.min = parseInt(curTime[0])   //分钟 0
+                    obj.sec = parseInt(curTime[1])   //秒钟 04
+                    obj.txt = val.substring(indeofLastTime + 1, val.length) //歌词文本: 留下唇印的嘴
+                    obj.txt = obj.txt.replace(/(^\s*)|(\s*$)/g, '')
+                    obj.dis = false
+                    obj.total = obj.min * 60 + obj.sec + obj.ms / 100   //总时间
+                    if (obj.txt.length > 0) {
+                        lyrObj.push(obj)
+                    }
+                })
             })
     }
 
@@ -261,12 +263,17 @@ export default class Main extends Component {
                 this.setState({
                     songs:song_idAry
                 })
+
+            })
+            .then(()=>{
+                this.spin()   //   启动旋转
                 this.loadSongInfo(0)   //预先加载第一首
             })
 
-        this.spin()   //   启动旋转
 
     }
+
+
 
     //旋转动画
     spin () {
