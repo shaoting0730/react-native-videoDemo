@@ -21,8 +21,9 @@ var {width,height} = Dimensions.get('window');
 import Video from 'react-native-video'
 var lyrObj = []   // 存放歌词
 var myAnimate;
-//  http://rapapi.org/mockjsdata/16978/rn_songList
-//  http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.lry&songid=213508
+//       http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.billboard.billList&type=2&size=10&offset=0    //总列表
+//       http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.lry&songid=213508   //歌词文件
+//       http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.play&songid=877578   //播放
 
 
 export default class Main extends Component {
@@ -31,7 +32,7 @@ export default class Main extends Component {
         super(props);
         this.spinValue = new Animated.Value(0)
         this.state = {
-            songs: [],   //数据源
+            songs: [],   //歌曲id数据源
             playModel:1,  // 播放模式  1:列表循环    2:随机    3:单曲循环
             btnModel:require('./image/列表循环.png'), //播放模式按钮背景图
             pic_small:'',    //小图
@@ -66,7 +67,7 @@ export default class Main extends Component {
     nextAction = (index) =>{
         this.recover()
         lyrObj = [];
-        if(index == this.state.songs.length){
+        if(index == 10){
             index = 0 //如果是最后一首就回到第一首
         }
         this.setState({
@@ -143,7 +144,6 @@ export default class Main extends Component {
                 this.refs.video.seek(0) //让video 重新播放
                 _scrollView.scrollTo({x: 0,y:0,animated:false});
             }
-
         }
 
     }
@@ -190,22 +190,23 @@ export default class Main extends Component {
 
     loadSongInfo = (index) => {
         //加载歌曲
-        fetch('http://rapapi.org/mockjsdata/16978/rn_songList')
+        let songid =  this.state.songs[index]
+        let url = 'http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.play&songid=' + songid
+        fetch(url)
             .then((response) => response.json())
             .then((responseJson) => {
-                let songList = responseJson.song_list //取出json中的歌曲数组
+                let songinfo = responseJson.songinfo
+                let bitrate = responseJson.bitrate
                 this.setState({
-                    songs:songList,   //设置数数据源
-                    pic_small:songList[index].pic_small, //小图
-                    pic_big:songList[index].pic_big,  //大图
-                    title:songList[index].title,     //歌曲名
-                    author:songList[index].author,   //歌手
-                    file_link:songList[index].file_link,   //播放链接
-                    file_duration:songList[index].file_duration //歌曲长度
+                    pic_small:songinfo.pic_small, //小图
+                    pic_big:songinfo.pic_big,  //大图
+                    title:songinfo.title,     //歌曲名
+                    author:songinfo.author,   //歌手
+                    file_link:bitrate.file_link,   //播放链接
+                    file_duration:bitrate.file_duration //歌曲长度
                 })
 
                 //加载歌词
-                let songid = this.state.songs[index].song_id
                 let url = 'http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.lry&songid=' + songid
                 fetch(url)
                     .then((response) => response.json())
@@ -242,13 +243,27 @@ export default class Main extends Component {
                         })
                     })
 
-
             })
     }
 
 
     componentWillMount() {
-        this.loadSongInfo(0)   //预先加载第一首
+        //先从总列表中获取到song_id保存
+        fetch('http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.billboard.billList&type=2&size=10&offset=0')
+            .then((response) => response.json())
+            .then((responseJson) => {
+                  var listAry = responseJson.song_list
+                var song_idAry = []; //保存song_id的数组
+                for(var i = 0;i<listAry.length;i++){
+                      let song_id = listAry[i].song_id
+                      song_idAry.push(song_id)
+                  }
+                this.setState({
+                    songs:song_idAry
+                })
+                this.loadSongInfo(0)   //预先加载第一首
+            })
+
         this.spin()   //   启动旋转
 
     }
@@ -269,7 +284,7 @@ export default class Main extends Component {
 
     render() {
         //如果未加载出来数据 就一直转菊花
-        if (this.state.songs.length <= 0 ) {
+        if (this.state.file_link.length <= 0 ) {
             return(
                 <ActivityIndicator
                     animating={this.state.animating}
