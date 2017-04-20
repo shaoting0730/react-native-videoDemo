@@ -14,5 +14,7 @@
  - [ ] 安卓就是个残废,亲生的和捡来的差别太大了<br/>
  - [ ] 其他<br/>
 
+关于Android该bug小弟实在无力解决,望知情者告知,谢谢:
+![image](https://github.com/pheromone/react-native-videoDemo/blob/master/2222.png) <br/>
  #效果截图:<br/>
  ![image](https://github.com/pheromone/react-native-videoDemo/blob/master/video1.gif) <br/>
