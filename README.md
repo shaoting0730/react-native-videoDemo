@@ -16,5 +16,5 @@
 
 关于Android该bug小弟实在无力解决,望知情者告知,谢谢:
 ![image](https://github.com/pheromone/react-native-videoDemo/blob/master/2222.png) <br/>
- #效果截图:<br/>
+ #iOS效果截图:<br/>
  ![image](https://github.com/pheromone/react-native-videoDemo/blob/master/video1.gif) <br/>
