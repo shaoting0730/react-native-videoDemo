@@ -26,7 +26,6 @@ var myAnimate;
 //       http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.lry&songid=213508   //歌词文件
 //       http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.play&songid=877578   //播放
 
-
 export default class Main extends Component {
 
     constructor(props) {
@@ -189,6 +188,9 @@ export default class Main extends Component {
         this.setState({ duration: data.duration });
     }
 
+
+
+
     loadSongInfo = (index) => {
         //加载歌曲
         let songid =  this.state.songs[index]
@@ -206,7 +208,6 @@ export default class Main extends Component {
                     file_link:bitrate.file_link,   //播放链接
                     file_duration:bitrate.file_duration //歌曲长度
                 })
-
             })
 
 
@@ -250,27 +251,35 @@ export default class Main extends Component {
 
 
     componentWillMount() {
+        this.loadSongList()
+    }
+
+
+    //先加载总列表
+    loadSongList = () =>{
         //先从总列表中获取到song_id保存
         fetch('http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.billboard.billList&type=2&size=10&offset=0')
             .then((response) => response.json())
-            .then((responseJson) => {
-                  var listAry = responseJson.song_list
-                var song_idAry = []; //保存song_id的数组
-                for(var i = 0;i<listAry.length;i++){
-                      let song_id = listAry[i].song_id
-                      song_idAry.push(song_id)
-                  }
-                this.setState({
-                    songs:song_idAry
-                })
-
-            })
-            .then(()=>{
-                this.spin()   //   启动旋转
-                this.loadSongInfo(0)   //预先加载第一首
+            .then((json) => {
+                this.backMethod(json)
             })
 
 
+    }
+
+
+    backMethod = (responseJson) =>{
+        var listAry = responseJson.song_list
+        var song_idAry = []; //保存song_id的数组
+        for(var i = 0;i<listAry.length;i++){
+            let song_id = listAry[i].song_id
+            song_idAry.push(song_id)
+        }
+        this.setState({
+            songs:song_idAry
+        })
+        this.spin()   //   启动旋转
+         this.loadSongInfo(0)   //预先加载第一首
     }
 
 
@@ -308,6 +317,7 @@ export default class Main extends Component {
             //数据加载出来
             return (
                 <View style={styles.container}>
+
                     {/*背景大图*/}
                     <Image source={{uri:this.state.pic_big}} style={{flex:1}}/>
                     {/*背景白色透明遮罩*/}
@@ -395,6 +405,7 @@ export default class Main extends Component {
         }
 
     }
+
 }
 
 const styles = StyleSheet.create({
@@ -435,6 +446,6 @@ const styles = StyleSheet.create({
     itemStyle: {
         paddingTop: 20,
         height:25,
-        backgroundColor:'rgba(255,255,255,0.0)'
+        backgroundColor:'rgba(255,255,255,0.0)',
     }
 })
