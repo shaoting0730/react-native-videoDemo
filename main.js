@@ -48,9 +48,53 @@ export default class Main extends Component {
             currentTime: 0.0,   //当前时间
             duration: 0.0,     //歌曲时间
             currentIndex:0,    //当前第几首
-            isplayBtn:require('./image/播放.png')  //播放/暂停按钮背景图
+            isplayBtn:require('./image/播放.png'),  //播放/暂停按钮背景图
+            imgRotate: new Animated.Value(0),
         }
+        this.isGoing = false; //为真旋转
+        this.myAnimate = Animated.timing(this.state.imgRotate, {
+            toValue: 1,
+            duration: 6000,
+            easing: Easing.inOut(Easing.linear),
+        });
+
     }
+    imgMoving = () => {
+
+        if (this.isGoing) {
+            this.state.imgRotate.setValue(0);
+            this.myAnimate.start(() => {
+                this.imgMoving()
+            })
+        }
+
+    };
+
+    stop = () => {
+        this.isGoing = !this.isGoing;
+
+        if (this.isGoing) {
+            this.myAnimate.start(() => {
+                this.myAnimate = Animated.timing(this.state.imgRotate, {
+                    toValue: 1,
+                    duration: 6000,
+                    easing: Easing.inOut(Easing.linear),
+                });
+                this.imgMoving()
+            })
+        } else {
+            this.state.imgRotate.stopAnimation((oneTimeRotate) => {
+                //计算角度比例
+                this.myAnimate = Animated.timing(this.state.imgRotate, {
+                    toValue: 1,
+                    duration: (1-oneTimeRotate) * 6000,
+                    easing: Easing.inOut(Easing.linear),
+                });
+            });
+
+        }
+
+    };
     //上一曲
     prevAction = (index) =>{
         this.recover()
@@ -107,6 +151,7 @@ export default class Main extends Component {
     }
     //播放/暂停
     playAction =() => {
+        this.stop()
         this.setState({
             pause: !this.state.pause
         })
@@ -250,8 +295,9 @@ export default class Main extends Component {
     }
 
 
-    componentWillMount() {
+    componentDidMount() {
         this.loadSongList()
+        this.stop()
     }
 
 
@@ -279,7 +325,7 @@ export default class Main extends Component {
             songs:song_idAry
         })
         this.spin()   //   启动旋转
-         this.loadSongInfo(0)   //预先加载第一首
+        this.loadSongInfo(0)   //预先加载第一首
     }
 
 
@@ -330,7 +376,11 @@ export default class Main extends Component {
                         {/*旋转小图*/}
                         <Animated.Image
                             ref = 'myAnimate'
-                            style={{width:140,height:140,marginTop: -180,alignSelf:'center',borderRadius: 140*0.5,transform: [{rotate: spin}]}}
+                            style={{width:140,height:140,marginTop: -180,alignSelf:'center',borderRadius: 140*0.5,transform: [{rotate: this.state.imgRotate.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: ['0deg', '360deg']
+                                })
+}]}}
                             source={{uri: this.state.pic_small}}
                         />
 
@@ -342,7 +392,7 @@ export default class Main extends Component {
                             paused={this.state.pause}
                             onProgress={(e) => this.onProgress(e)}
                             onLoad={(e) => this.onLoad(e)}
-                             playInBackground={true}
+                            playInBackground={true}
                         />
                         {/*歌曲信息*/}
                         <View style={styles.playingInfo}>
